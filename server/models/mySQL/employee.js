@@ -46,7 +46,6 @@ class Employee {
 
         const query = `UPDATE ${this.table} SET ${set_values}
                        WHERE id = ${this.id}`;
-        console.log(query);
         return db.execute(query);
     }
 
