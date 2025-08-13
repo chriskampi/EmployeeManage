@@ -102,7 +102,11 @@ const employeeSlice = createSlice({
       .addCase(updateEmployee.fulfilled, (state, action) => {
         const index = state.employees.findIndex(emp => emp.id === action.payload.id);
         if (index !== -1) {
-          state.employees[index] = action.payload;
+          // Preserve existing skills and merge with updated fields
+          state.employees[index] = {
+            ...state.employees[index], // Keep existing data including skills
+            ...action.payload // Override with updated fields
+          };
         }
       })
       // Delete employee
