@@ -7,6 +7,7 @@ export interface Employee {
   lastname: string;
   email: string;
   skill_title?: string;
+  skills?: Array<{ id: number; title: string }>;
 }
 
 interface EmployeeState {

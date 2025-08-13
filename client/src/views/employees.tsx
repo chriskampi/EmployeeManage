@@ -29,7 +29,9 @@ const Employees: React.FC = () => {
     email: '',
   });
   const [showSkillModal, setShowSkillModal] = useState<number | null>(null);
+  const [showRemoveSkillModal, setShowRemoveSkillModal] = useState<number | null>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<number | null>(null);
+  const [selectedRemoveSkillId, setSelectedRemoveSkillId] = useState<number | null>(null);
 
   const dispatch = useDispatch<AppDispatch>();
   const { employees, loading, error } = useSelector((state: RootState) => state.employees);
@@ -81,6 +83,8 @@ const Employees: React.FC = () => {
   const handleAddSkill = async (employeeId: number) => {
     if (selectedSkillId) {
       await dispatch(addSkillToEmployee({ employee_id: employeeId, skill_id: selectedSkillId }));
+      // Refresh the entire employee list to get updated skills
+      await dispatch(fetchEmployees(searchTerm));
       setShowSkillModal(null);
       setSelectedSkillId(null);
     }
@@ -90,6 +94,24 @@ const Employees: React.FC = () => {
     if (window.confirm('Are you sure you want to remove this skill?')) {
       await dispatch(removeSkillFromEmployee({ employee_id: employeeId, skill_id: skillId }));
     }
+  };
+
+  const handleRemoveSkillModal = async (employeeId: number) => {
+    if (selectedRemoveSkillId) {
+      await dispatch(removeSkillFromEmployee({ employee_id: employeeId, skill_id: selectedRemoveSkillId }));
+      // Refresh the entire employee list to get updated skills
+      await dispatch(fetchEmployees(searchTerm));
+      setShowRemoveSkillModal(null);
+      setSelectedRemoveSkillId(null);
+    }
+  };
+
+  const openAddSkillModal = (employeeId: number) => {
+    setShowSkillModal(employeeId);
+  };
+
+  const openRemoveSkillModal = (employeeId: number) => {
+    setShowRemoveSkillModal(employeeId);
   };
 
   const resetForm = () => {
@@ -224,7 +246,20 @@ const Employees: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {employee.skill_title || 'No skills'}
+                        {employee.skills && employee.skills.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {employee.skills.map((skill, index) => (
+                              <span
+                                key={skill.id}
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                              >
+                                {skill.title}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          'No skills'
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -235,10 +270,16 @@ const Employees: React.FC = () => {
                         Edit
                       </button>
                       <button
-                        onClick={() => setShowSkillModal(employee.id)}
+                        onClick={() => openAddSkillModal(employee.id)}
                         className="text-green-600 hover:text-green-900"
                       >
                         Add Skill
+                      </button>
+                      <button
+                        onClick={() => openRemoveSkillModal(employee.id)}
+                        className="text-orange-600 hover:text-orange-900"
+                      >
+                        Remove Skill
                       </button>
                       <button
                         onClick={() => handleDelete(employee.id)}
@@ -266,11 +307,16 @@ const Employees: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
                 >
                   <option value="">Select a skill</option>
-                  {skills.map((skill) => (
-                    <option key={skill.id} value={skill.id}>
-                      {skill.title}
-                    </option>
-                  ))}
+                  {skills
+                    .filter(skill => {
+                      const employee = employees.find(emp => emp.id === showSkillModal);
+                      return employee && (!employee.skills || !employee.skills.some(empSkill => empSkill.id === skill.id));
+                    })
+                    .map((skill) => (
+                      <option key={skill.id} value={skill.id}>
+                        {skill.title}
+                      </option>
+                    ))}
                 </select>
                 <div className="flex space-x-2">
                   <button
@@ -283,6 +329,49 @@ const Employees: React.FC = () => {
                     onClick={() => {
                       setShowSkillModal(null);
                       setSelectedSkillId(null);
+                    }}
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Remove Skill Modal */}
+        {showRemoveSkillModal && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Remove Skill from Employee</h3>
+                <select
+                  value={selectedRemoveSkillId || ''}
+                  onChange={(e) => setSelectedRemoveSkillId(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                >
+                  <option value="">Select a skill to remove</option>
+                  {(() => {
+                    const employee = employees.find(emp => emp.id === showRemoveSkillModal);
+                    return employee && employee.skills ? employee.skills.map((skill) => (
+                      <option key={skill.id} value={skill.id}>
+                        {skill.title}
+                      </option>
+                    )) : [];
+                  })()}
+                </select>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleRemoveSkillModal(showRemoveSkillModal)}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md transition-colors"
+                  >
+                    Remove Skill
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowRemoveSkillModal(null);
+                      setSelectedRemoveSkillId(null);
                     }}
                     className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
                   >

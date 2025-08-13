@@ -6,16 +6,26 @@ router.get('/getEmployees', (req, res) => {
     const { search } = req.query;
     const employee = new Employee();
     employee.fetchAllEmployees(search)
-    .then(result => {
-        const employees = result[0].map(employee => {
-            return {
-                id: employee.id,
-                firstname: employee.firstname,
-                lastname: employee.lastname,
-                email: employee.email,
-                skill_title: employee.skill_title
+    .then((result) => {
+        const employees = result[0].map(emp => {
+            // Parse skills data from the GROUP_CONCAT result
+            let skills = [];
+            if (emp.skills_data) {
+                skills = emp.skills_data.split('|').map(skillStr => {
+                    const [id, title] = skillStr.split(':');
+                    return { id: parseInt(id), title: title };
+                });
             }
+
+            return {
+                id: emp.id,
+                firstname: emp.firstname,
+                lastname: emp.lastname,
+                email: emp.email,
+                skills: skills
+            };
         });
+
         res.json({
             success: true,
             message: 'Employees fetched successfully',
@@ -52,9 +62,9 @@ router.put('/updateEmployee', (req, res) => {
     const { id, firstname, lastname, email } = req.body;
 
     const fields_to_update = {
-        firstname: firstname,
-        lastname: lastname,
-        email: email
+        firstname,
+        lastname,
+        email
     };
 
     const employee = new Employee(id, null, null, null);
