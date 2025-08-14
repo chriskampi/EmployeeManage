@@ -18,13 +18,23 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AppRoutes: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated } = useSelector((state: RootState) => state.admin);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('AppRoutes: useEffect called, checking auth status');
-    dispatch(checkAuthStatus());
+    const checkAuth = () => {
+      dispatch(checkAuthStatus());
+      setIsLoading(false);
+    };
+    checkAuth();
   }, [dispatch]);
 
-  console.log('AppRoutes: render called, isAuthenticated:', isAuthenticated);
+  console.log('AppRoutes: render called, isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <Router>
