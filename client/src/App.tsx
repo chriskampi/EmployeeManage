@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
-import { store, RootState } from './redux/store';
+import { store, RootState, AppDispatch } from './redux/store';
 import { checkAuthStatus } from './redux/actions/admin_actions';
 import Login from './views/login';
 import Employees from './views/employees';
@@ -10,17 +10,21 @@ import Skills from './views/skills';
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useSelector((state: RootState) => state.admin);
+  console.log('ProtectedRoute: render called, isAuthenticated:', isAuthenticated);
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
 // App Routes Component
 const AppRoutes: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated } = useSelector((state: RootState) => state.admin);
 
   useEffect(() => {
+    console.log('AppRoutes: useEffect called, checking auth status');
     dispatch(checkAuthStatus());
   }, [dispatch]);
+
+  console.log('AppRoutes: render called, isAuthenticated:', isAuthenticated);
 
   return (
     <Router>
@@ -44,6 +48,17 @@ const AppRoutes: React.FC = () => {
         />
         <Route
           path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/employees" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        {/* Catch-all route for unmatched paths */}
+        <Route
+          path="*"
           element={
             isAuthenticated ? (
               <Navigate to="/employees" replace />

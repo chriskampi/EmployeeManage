@@ -41,7 +41,7 @@ class Employee {
         for (var key in fields_to_update) {
             set_values += `${key} = '${fields_to_update[key]}', `;
         }
-        // Remove the last comma and space
+
         set_values = set_values.slice(0, -2);
 
         const query = `UPDATE ${this.table} SET ${set_values}

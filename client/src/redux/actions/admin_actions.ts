@@ -40,6 +40,8 @@ export const logoutAdmin = createAsyncThunk(
   }
 );
 
+
+
 const adminSlice = createSlice({
   name: 'admin',
   initialState,
@@ -48,14 +50,24 @@ const adminSlice = createSlice({
       state.error = null;
     },
     checkAuthStatus: (state) => {
+      console.log('checkAuthStatus: action called');
       const adminData = localStorage.getItem('admin');
+      console.log('checkAuthStatus: adminData from localStorage:', adminData);
       if (adminData) {
         try {
           state.admin = JSON.parse(adminData);
           state.isAuthenticated = true;
+          console.log('checkAuthStatus: authentication successful, admin:', state.admin);
         } catch (error) {
+          console.log('checkAuthStatus: error parsing admin data:', error);
           localStorage.removeItem('admin');
+          state.admin = null;
+          state.isAuthenticated = false;
         }
+      } else {
+        console.log('checkAuthStatus: no admin data found');
+        state.admin = null;
+        state.isAuthenticated = false;
       }
     },
   },
